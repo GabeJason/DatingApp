@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { NgxGalleryAnimation, NgxGalleryImage, NgxGalleryOptions } from '@kolkov/ngx-gallery';
 import { Member } from 'src/app/_models/member';
 import { MembersService } from 'src/app/_services/members.service';
@@ -14,7 +15,7 @@ export class MemberDetailComponent implements OnInit {
   galleryOptions: NgxGalleryOptions[];
   galleryImages: NgxGalleryImage[];
 
-  constructor(private memberService: MembersService, private route: ActivatedRoute) { }
+  constructor(private memberService: MembersService, private route: ActivatedRoute, private toastr: ToastrService) { }
 
   ngOnInit(): void {
     this.loadMember();
@@ -49,6 +50,20 @@ export class MemberDetailComponent implements OnInit {
       this.member = member;
       this.galleryImages = this.getImages();
     })
+  }
+
+  toggleLike(member: Member) {
+    this.memberService.toggleLike(member.username).subscribe(response => {
+      if (response) {
+        if (response == "Like Added") {
+          this.toastr.success('You have liked ' + member.knownAs);
+          this.member.liked = 1;
+        } else if (response == "Like Removed") {
+          this.toastr.warning('You have unliked ' + member.knownAs);
+          this.member.liked = 0;
+        }
+      }
+    });
   }
 
 }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using API.DTOs;
 using API.Entities;
+using API.Extensions;
 using API.Helpers;
 using API.Interfaces;
 using AutoMapper;
@@ -32,7 +33,9 @@ namespace API.Data
 
         public async Task<PagedList<MemberDto>> GetMembersAsync(UserParams userParams)
         {
-            var query = _context.Users.AsQueryable();
+            var currentUserId = userParams.CurrentUserId;
+           // var query = _context.Users.FromSqlRaw("Select Users.*, (Select Count(*) from Likes where Likes.SourceUserId = {0}) AS Liked, (Select {0}) as CurrentUserId FROM Users",currentUserId).AsQueryable();
+            var query = _context.Users.Include(u => u.LikedByUsers).AsQueryable();
 
             query = query.Where(u => u.UserName != userParams.CurrentUsername);
             query = query.Where(u => u.Gender == userParams.Gender);
@@ -42,13 +45,35 @@ namespace API.Data
 
             query = query.Where(u => u.DateOfBirth >= minDob && u.DateOfBirth <= maxDob);
 
+            
+
             query = userParams.OrderBy switch
             {
                 "created" => query.OrderByDescending(u => u.Created),
                 _ => query.OrderByDescending(u => u.LastActive)
             };
 
-            return await PagedList<MemberDto>.CreateAsync(query.ProjectTo<MemberDto>(_mapper.ConfigurationProvider).AsNoTracking(), userParams.PageNumber, userParams.PageSize);
+            var mapping = query.Select(user => new MemberDto
+            {
+                Id = user.Id,
+                Username = user.UserName,
+                PhotoUrl = user.Photos.FirstOrDefault(p => p.IsMain).Url,
+                Age = user.DateOfBirth.CalculateAge(),
+                KnownAs = user.KnownAs,
+                Created = user.Created,
+                LastActive = user.LastActive,
+                Gender = user.Gender,
+                Introduction = user.Introduction,
+                LookingFor = user.LookingFor,
+                Interests = user.Interests,
+                City = user.City,
+                Country = user.Country,
+                Photos = (ICollection<PhotoDto>)user.Photos.Select(photo => new PhotoDto { Id = photo.Id, Url = photo.Url, IsMain = photo.IsMain}),
+                Liked = user.LikedByUsers.Where(l => l.SourceUserId == currentUserId).Count()
+
+            });
+
+            return await PagedList<MemberDto>.CreateAsync(mapping.AsNoTracking(), userParams.PageNumber, userParams.PageSize);
         }
 
         public async Task<AppUser> GetUserByIdAsync(int id)

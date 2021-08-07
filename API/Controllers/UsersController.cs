@@ -34,6 +34,7 @@ namespace API.Controllers
         {
             var user = await _userRepository.GetUserByUsernameAsync(User.GetUsername());
             userParams.CurrentUsername = User.GetUsername();
+            userParams.CurrentUserId = User.GetUserId();
 
             if (string.IsNullOrEmpty(userParams.Gender)) userParams.Gender = user.Gender == "male" ? "female" : "male" ;
 
