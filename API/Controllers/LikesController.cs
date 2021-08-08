@@ -21,7 +21,7 @@ namespace API.Controllers
             _userRepository = userRepository;
         }
 
-        [HttpPost("{username}")]
+        [HttpPost("add-like/{username}")]
         public async Task<ActionResult<string>> AddLike(string username)
         {
             var sourceUserId = User.GetUserId();
@@ -36,21 +36,44 @@ namespace API.Controllers
 
             if (userLike != null)
             {
-                sourceUser.LikedUsers.Remove(userLike);
+                return BadRequest("You already liked this user.");
+            } 
 
-                if (await _userRepository.SaveAllAsync()) return "Like Removed";
-            } else {
-                userLike = new UserLike
-                {
-                    SourceUserId = sourceUserId,
-                    LikedUserId = likedUser.Id
-                };
-                sourceUser.LikedUsers.Add(userLike);
-            
-                if (await _userRepository.SaveAllAsync()) return "Like Added";
-            }
+            userLike = new UserLike
+            {
+                SourceUserId = sourceUserId,
+                LikedUserId = likedUser.Id
+            };
+            sourceUser.LikedUsers.Add(userLike);
+        
+            if (await _userRepository.SaveAllAsync()) return Ok();
 
             return BadRequest("Failed to like user");
+        }
+
+        [HttpDelete("delete-like/{username}")]
+        public async Task<ActionResult<string>> DeleteLike(string username)
+        {
+            var sourceUserId = User.GetUserId();
+            var likedUser = await _userRepository.GetUserByUsernameAsync(username);
+            var sourceUser = await _likesRepository.GetUserWithLikes(sourceUserId);
+
+            if (likedUser == null) return NotFound();
+
+            if (sourceUser.UserName == username) return BadRequest("You cannot like yourself");
+
+            var userLike = await _likesRepository.GetUserLike(sourceUserId, likedUser.Id);
+
+            if (userLike == null)
+            {
+                return BadRequest("You already don't like this user.");
+            }
+
+            sourceUser.LikedUsers.Remove(userLike);
+
+            if (await _userRepository.SaveAllAsync()) return Ok();
+
+            return BadRequest("Failed to unlike user");
         }
 
         [HttpGet]

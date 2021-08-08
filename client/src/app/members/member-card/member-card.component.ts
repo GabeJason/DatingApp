@@ -17,17 +17,17 @@ export class MemberCardComponent implements OnInit {
   }
 
   toggleLike(member: Member) {
-    this.memberService.toggleLike(member.username).subscribe(response => {
-      if (response) {
-        if (response == "Like Added") {
-          this.toastr.success('You have liked ' + member.knownAs);
-          this.member.liked = 1;
-        } else if (response == "Like Removed") {
-          this.toastr.warning('You have unliked ' + member.knownAs);
-          this.member.liked = 0;
-        }
-      }
-    });
+    if (this.member.liked === 0) {
+      this.memberService.addLike(member.username).subscribe(response => {
+        this.toastr.success('You have liked ' + member.knownAs);
+        this.member.liked = 1;
+      });
+    } else {
+      this.memberService.deleteLike(member.username).subscribe(response => {
+        this.toastr.warning('You have unliked ' + member.knownAs);
+        this.member.liked = 0;
+      });
+    }
   }
 
 }
