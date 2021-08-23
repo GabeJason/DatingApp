@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { AbstractControl, FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormControl, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { AccountService } from '../_services/account.service';
@@ -31,7 +31,12 @@ export class RegisterComponent implements OnInit {
       dateOfBirth: ['', Validators.required],
       city: ['', Validators.required],
       country: ['', Validators.required],
-      password: ['', [Validators.required, Validators.minLength(4), Validators.maxLength(8)]],
+      password: ['', [Validators.required, Validators.minLength(8), 
+        Validators.maxLength(24), 
+        this.patternValidator(/\d/, {hasNumber: true}), 
+        this.patternValidator(/[!@#$%^&*(),.?:]/, {hasSymbol: true}), 
+        this.patternValidator(/[A-Z]/, {hasUpperCase: true}), 
+        this.patternValidator(/[a-z]/, {hasLowerCase: true})]],
       confirmPassword: ['', [Validators.required, this.matchValues('password')]]
     });
     this.registerForm.controls.password.valueChanges.subscribe(() => {
@@ -42,6 +47,16 @@ export class RegisterComponent implements OnInit {
   matchValues(matchTo: string): ValidatorFn {
     return (control: AbstractControl) => {
       return control?.value === control?.parent?.controls[matchTo].value ? null : {isMatching: true}
+    }
+  }
+
+  patternValidator(regex: RegExp, error: ValidationErrors): ValidatorFn {
+    return (control: AbstractControl): {[key: string]: any} => {
+      if (!control.value) {
+        return null;
+      }
+      const valid = regex.test(control.value);
+      return valid ? null : error;
     }
   }
 
