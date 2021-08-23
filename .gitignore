@@ -448,5 +448,4 @@ $RECYCLE.BIN/
 !.vscode/extensions.json
 
 appsettings.json
-API/wwwroot/*
 API/datingapp.db
