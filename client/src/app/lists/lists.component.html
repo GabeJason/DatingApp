@@ -12,9 +12,16 @@
 
     <div class="row mt-3">
         <ng-container *ngFor="let member of members">
-        <div class="col-2" *ngIf="member.liked == 1">
-            <app-member-card [member]="member"></app-member-card>
-        </div>
+            <ng-container *ngIf="predicate === 'likedBy'">
+                <div class="col-2">
+                    <app-member-card [member]="member"></app-member-card>
+                </div>
+            </ng-container>
+            <ng-container *ngIf="predicate === 'liked'">
+                <div class="col-2" *ngIf="member.liked == 1">
+                    <app-member-card [member]="member"></app-member-card>
+                </div>
+            </ng-container>
         </ng-container>
     </div>
 </div>

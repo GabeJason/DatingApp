@@ -48,7 +48,7 @@ namespace API.Data
                 PhotoUrl = user.Photos.FirstOrDefault(p => p.IsMain).Url,
                 City = user.City,
                 Id = user.Id,
-                Liked = 1
+                Liked = user.LikedByUsers.Where(l => l.SourceUserId == likesParams.UserId).Count()
             });
 
             return await PagedList<LikeDto>.CreateAsync(likedUsers, likesParams.PageNumber, likesParams.PageSize);
