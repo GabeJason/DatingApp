@@ -4,6 +4,7 @@ using API.DTOs;
 using API.Entities;
 using API.Interfaces;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +43,10 @@ namespace API.Controllers
 
             if (!roleResult.Succeeded) return BadRequest(result.Errors);
 
+            var signin = await _signInManager.CheckPasswordSignInAsync(user, registerDto.Password, false);
+
+            if (!signin.Succeeded) return Unauthorized("Registration Complete, Sign in failed");
+
             return new UserDto
             {
                 Username = user.UserName,
@@ -70,6 +75,36 @@ namespace API.Controllers
                 KnownAs = user.KnownAs,
                 Gender = user.Gender
             };
+        }
+
+        [Authorize]
+        [HttpPost("signout")]
+        public async Task<ActionResult> SignOutUser()
+        {
+            await _signInManager.SignOutAsync();
+
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpPost("update-password")]
+        public async Task<ActionResult> UpdatePassword(UpdatePasswordDto updatePasswordDto)
+        {
+            var user = await _userManager.Users.SingleOrDefaultAsync(x => x.Id == updatePasswordDto.UserId);
+
+            if (user == null) return NotFound("Failed to find user");
+
+            var result = await _userManager.ChangePasswordAsync(user,updatePasswordDto.CurrentPassword,updatePasswordDto.Password);
+
+            if (!result.Succeeded) {
+                var errors = "";
+                foreach (IdentityError error in result.Errors) {
+                    errors = errors + " " + error.Description;
+                }
+                return BadRequest(errors);
+            } 
+
+            return Ok();
         }
 
         private async Task<bool> UserExists(string username)

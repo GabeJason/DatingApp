@@ -57,6 +57,29 @@
             <tab heading='Edit Photos'>
                 <app-photo-editor [member]="member"></app-photo-editor>
             </tab>
+            <tab heading='Edit Personal Details'>
+                <ng-container *ngIf="updatePasswordForm">
+                <form [formGroup]='updatePasswordForm' (ngSubmit)="updatePasswordForm.valid && updatePassword()" autocomplete="off">
+                    <h4 class="mt-2">Update Password</h4>
+                    <app-text-input [formControl]='updatePasswordForm.controls["currentPassword"]' [label]='"Current Password"' [type]='"password"'></app-text-input>
+                    <app-text-input [formControl]='updatePasswordForm.controls["password"]' [label]='"New Password"' [type]='"password"'></app-text-input>
+                    <app-text-input [formControl]='updatePasswordForm.controls["confirmPassword"]' [label]='"Confirm Password"' [type]='"password"'></app-text-input>
+                
+                    <div class="row" *ngIf="validationErrors.length > 0" >
+                        <ul class="text-danger">
+                            <li *ngFor="let error of validationErrors">
+                                {{error}}
+                            </li>
+                        </ul>
+                    </div>
+                
+                    <div class="form-group text-center">
+                        <button [disabled]='!updatePasswordForm.valid' class="btn btn-success mr-2" type="submit">Update</button>
+                        <button class="btn btn-default mr-2" (click)="cancel()">Cancel</button>
+                    </div>
+                </form>
+                </ng-container>
+            </tab>
         </tabset>
     </div>
 </div>
